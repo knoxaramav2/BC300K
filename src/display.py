@@ -1,7 +1,7 @@
 
 import pygame
 from pygame import Surface
-from colors import Colors
+from colors import Color
 
 from config import Config, GetConfig
 
@@ -14,14 +14,18 @@ class Display:
 
     __cfg           : Config
 
+    def get_canvas(self):
+        return self.__canvas
+
     def render(self):
         pygame.display.update()
 
     def clear(self):
-        self.__canvas.fill(Colors.BLACK.value)
+        self.__canvas.fill(Color.BLACK.value)
 
     def __init__(self):
         pygame.display.init()
+        pygame.font.init()
         pygame.display.set_caption('BC 300K')
         w = pygame.display.Info().current_w
         h = pygame.display.Info().current_h
@@ -33,6 +37,10 @@ class Display:
 
 
 __inst__: Display = None
+
+def get_canvas():
+    global __inst__
+    return __inst__.get_canvas()
 
 def get_display():
     global __inst__

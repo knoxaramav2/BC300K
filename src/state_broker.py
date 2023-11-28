@@ -23,7 +23,6 @@ class StateBroker:
             res = menu.show()
             if res == MENU_RESULT.QUIT:
                 self.__state == RUN_STATE.EXIT
-
             match self.__state:
                 case RUN_STATE.SETTINGS:
                     menu = SettingsMenu()
