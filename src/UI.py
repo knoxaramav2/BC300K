@@ -28,9 +28,10 @@ class Control:
     _border_width   : int
 
     _parent         : Control
+    _padx           : int
+    _pady           : int
 
     def __draw_border(self):
-
         hb = Rect(self._bounds.left, self._bounds.top, self._bounds.width, self._border_width)
         vb = Rect(self._bounds.left, self._bounds.top, self._border_width, self._bounds.height)
 
@@ -81,16 +82,69 @@ class Control:
                  width = 0, height = 0,
                  pos_x = 0, pos_y = 0,
                  border_width:int=3,
+                 padx:int=0, pady:int=0,
                  fg=Color.WHITE, bg=Color.BLACK, border:Color=Color.LIGHT_GRAY,
                  parent:Control = None
                  ):
-        self._bounds = Rect(pos_x, pos_y, width, height)
+        self._bounds = Rect(pos_x, pos_y, width+padx*2, height+pady*2)
         self._display = get_display()
         self._border_color = border
         self._border_width = border_width
         self._parent = parent
         self._fg_color = fg
         self._bg_color = bg
+        self._padx = padx
+        self._pady = pady
+
+class Writeable(Control):
+
+    __font_size     : int
+    __font          : str
+    __text          : Surface
+    _value          : str
+
+    def set_text(self, text:str):
+        self._value = text
+        font = pygame.font.SysFont(self.__font, self.__font_size)
+        self.__text = font.render(text, False, self._fg_color.value)
+
+    def on_backspace(self):
+        if self._value == '': return
+        self.set_text(self._value[:-1])
+
+    def on_type(self, char:str):
+        self.set_text(self._value + char)
+    
+    def update(self):
+        super().update()
+        self._display.get_canvas().blit(self.__text, (self._bounds.left+self._padx, self._bounds.centery-self._pady*2))
+
+    def move(self, x: int, y: int, align:ALIGN=ALIGN.TOP_LEFT):
+        super().move(x, y, align)
+
+    def __init__(self, width=0, height=0, pos_x=0, pos_y=0, 
+                 font:str='arial', font_size:int=20, text:str='',
+                 border_width: int = 3, 
+                 padx:int=0, pady:int=0,
+                 fg=Color.WHITE, bg=Color.BLACK, 
+                 border: Color = Color.LIGHT_GRAY, parent: Control = None):
+        super().__init__(width, height, pos_x, pos_y, border_width, padx, pady, fg, bg, border, parent)
+
+        self.__font = font
+        self.__font_size = font_size
+        self.set_text(text)
+
+        if width == 0: self._bounds.width = self.__text.get_width()+(padx*2)
+        else: self._bounds.width = width+(padx*2)
+        
+        if height == 0: self._bounds.height = self.__text.get_height()+(pady*2)
+        else: self._bounds.height = height+(pady*2)
+
+        self.move(pos_x, pos_y, align=ALIGN.LEFT)
+
+class Text(Writeable):
+
+    pass
 
 class Label(Control):
     
@@ -118,10 +172,11 @@ class Label(Control):
                  width=0, height=0, 
                  pos_x=0, pos_y=0,
                  border_width:int=3,
+                 padx:int=0, pady:int=0,
                  fg=Color.WHITE, bg=Color.BLACK, border: Color = Color.LIGHT_GRAY, 
                  font_size:int=20,
                  parent: Control = None):
-        super().__init__(width, height, pos_x, pos_y, border_width, fg, bg, border, parent)
+        super().__init__(width, height, pos_x, pos_y, border_width, padx, pady, fg, bg, border, parent)
         self.__font = font
         self.__font_size = font_size
         self.set_text(text)
@@ -132,14 +187,61 @@ class Clickable(Control):
     __callback      : Callable
 
     def on_click(self):
-        pass
+        if self.__callback != None:
+            self.__callback()
 
     def __init__(self, width=0, height=0, pos_x=0, pos_y=0, 
-                 border_width: int = 3, fg=Color.WHITE, bg=Color.BLACK, 
+                 border_width: int = 3, 
+                 padx:int=0, pady:int=0,
+                 fg=Color.WHITE, bg=Color.BLACK, 
                  border: Color = Color.LIGHT_GRAY, parent: Control = None,
                  callback:Callable=None):
-        super().__init__(width, height, pos_x, pos_y, border_width, fg, bg, border, parent)
+        super().__init__(width, height, pos_x, pos_y, border_width, padx, pady, fg, bg, border, parent)
         self.__callback = callback
+
+class CheckBox(Clickable):
+
+    _value          : bool
+    _check_color    : Color
+    _uncheck_color  : Color
+    _label          : Label
+
+    def update(self):
+        super().update()
+        self.label.update()
+
+    def move(self, x: int, y: int):
+        super().move(x, y, ALIGN.CENTER)
+        self.label.move(x, y, ALIGN.CENTER)
+
+    def __init__(self, width=10, height=10, pos_x=0, pos_y=0, 
+                 value:bool = False,
+                 border_width: int = 3,
+                 padx:int=0, pady:int=0, 
+                 fg=Color.WHITE, border: Color = Color.LIGHT_GRAY, 
+                 parent: Control = None, callback: Callable[..., Any] = None,
+                 check_color:Color=Color.GREEN, uncheck_color:Color = Color.GREY,
+                 text:str=''):
+        super().__init__(width, height, pos_x, pos_y, border_width, padx, pady, fg, uncheck_color, border, parent, callback)
+        self.label = Label(text, fg=fg, border_width=0, bg=None, parent=self)
+        
+        self._bounds.width = max(self.label._bounds.width, self._bounds.width)
+        self._bounds.height = max(self.label._bounds.height, self.label._bounds.height)
+        
+        self._value = value
+        self._check_color = check_color
+        self._uncheck_color = uncheck_color
+
+    def on_click(self):
+        super().on_click()
+        self._value = not self._value
+        self._bg_color = self._check_color if self._value else self._uncheck_color
+
+    def set(self, val:bool):
+        self._value = val
+
+    def get(self):
+        return self._value
 
 class Button(Clickable):
 
@@ -154,10 +256,12 @@ class Button(Clickable):
         self.label.move(x, y, ALIGN.CENTER)
 
     def __init__(self, width=0, height=0, pos_x=0, pos_y=0, 
-                 border_width: int = 3, fg=Color.WHITE, bg=Color.BLACK, 
+                 border_width: int = 3, 
+                 padx:int=0, pady:int=0,
+                 fg=Color.WHITE, bg=Color.BLACK, 
                  border: Color = Color.LIGHT_GRAY, parent: Control = None, 
                  text='', pad:int=3, callback: Callable[..., Any] = None):
-        super().__init__(width, height, pos_x, pos_y, border_width, fg, bg, border, parent, callback)
+        super().__init__(width, height, pos_x, pos_y, border_width, padx, pady, fg, bg, border, parent, callback)
         self.label = Label(text, fg=fg, border_width=0, bg=None, parent=self)
         
         self._bounds.width = max(self.label._bounds.width, self._bounds.width)
@@ -184,42 +288,47 @@ class Container(Control):
             self.y = y
             self.align = align
 
-    __children          : list[Container.Box]
+    _children          : list[Container.Box]
 
     def update(self):
         super().update()
-        for c in self.__children:
+        for c in self._children:
             c.content.update()
 
     def insert(self, ctrl:Control, x:int, y:int, align:ALIGN=ALIGN.LEFT):
         box = Container.Box(ctrl, x, y, align)
-        self.__children.append(box)
+        self._children.append(box)
 
     def pack(self):
-        g_w = max(t.x for t in self.__children)
-        g_h = max(t.y for t in self.__children)
+        g_w = max(t.x for t in self._children)
+        g_h = max(t.y for t in self._children)
         b_w = self._bounds.width
         b_h = self._bounds.height
 
         d_w = b_w/(g_w+1)
         d_h = b_h/(g_h+1)
 
-        for c in self.__children:
+        for c in self._children:
             ref = Rect(self._bounds.left+d_w*c.x, self._bounds.top+d_h*c.y, d_w, d_h)
             match c.align:
-                case ALIGN.LEFT: 
-                    c.content.move()
-                case ALIGN.RIGHT: pass
-                case ALIGN.TOP: pass
-                case ALIGN.BOTTOM: pass
-                case ALIGN.CENTER: c.content.move(ref.centerx, ref.centery)
+                case ALIGN.TOP: c.content.move(ref.centerx, ref.top)
+                case ALIGN.TOP_LEFT:c.content.move(ref.left, ref.top)
+                case ALIGN.TOP_RIGHT:c.content.move(ref.right, ref.top)
 
+                case ALIGN.BOTTOM: c.content.move(ref.centerx, ref.bottom)
+                case ALIGN.BOTTOM_LEFT: c.content.move(ref.left, ref.bottom)
+                case ALIGN.BOTTOM_RIGHT: c.content.move(ref.right, ref.bottom)
+
+                case ALIGN.CENTER: c.content.move(ref.centerx, ref.centery)
+                case ALIGN.LEFT: c.content.move(ref.left, ref.centery)
+                case ALIGN.RIGHT: c.content.move(ref.right, ref.centery)
 
     def __init__(self, width=0, height=0, 
                  pos_x=0, pos_y=0, 
                  border_width:int=3,
+                 padx:int=0, pady:int=0,
                  fg=Color.WHITE, bg=Color.BLACK, border: Color = Color.LIGHT_GRAY, 
                  parent: Control = None):
-        super().__init__(width, height, pos_x, pos_y, border_width, fg, bg, border, parent)
-        self.__children = []
+        super().__init__(width, height, pos_x, pos_y, border_width, padx, pady, fg, bg, border, parent)
+        self._children = []
 

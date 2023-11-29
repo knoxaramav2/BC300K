@@ -8,7 +8,6 @@ class Loop:
 
     __is_active         : bool = False
     __pause             : bool = True
-
     __display           : Display
 
 
