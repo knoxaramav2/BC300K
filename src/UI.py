@@ -102,8 +102,23 @@ class Writeable(Control):
     __font          : str
     __text          : Surface
     _value          : str
+    _const          : CONSTRAINT
+
+    CONSTRAINT = Enum(
+        'constraint', [
+            'NUM', 'ALPHA', 'ALPHANUM'
+        ]
+    )
 
     def set_text(self, text:str):
+
+        if self._const == Writeable.CONSTRAINT.ALPHANUM:
+            if not text.isalnum() and text!= '': return
+        elif self._const == Writeable.CONSTRAINT.ALPHA:
+            if not text.isalpha() and text!= '': return
+        elif self._const == Writeable.CONSTRAINT.NUM:
+            if not text.isnumeric() and text!= '': return
+
         self._value = text
         font = pygame.font.SysFont(self.__font, self.__font_size)
         self.__text = font.render(text, False, self._fg_color.value)
@@ -117,7 +132,7 @@ class Writeable(Control):
     
     def update(self):
         super().update()
-        self._display.get_canvas().blit(self.__text, (self._bounds.left+self._padx, self._bounds.centery-self._pady*2))
+        self._display.get_canvas().blit(self.__text, (self._bounds.left+self._padx, self._bounds.top-self._pady*2))
 
     def move(self, x: int, y: int, align:ALIGN=ALIGN.TOP_LEFT):
         super().move(x, y, align)
@@ -127,9 +142,11 @@ class Writeable(Control):
                  border_width: int = 3, 
                  padx:int=0, pady:int=0,
                  fg=Color.WHITE, bg=Color.BLACK, 
+                 const:CONSTRAINT=CONSTRAINT.ALPHANUM,
                  border: Color = Color.LIGHT_GRAY, parent: Control = None):
         super().__init__(width, height, pos_x, pos_y, border_width, padx, pady, fg, bg, border, parent)
 
+        self._const = const
         self.__font = font
         self.__font_size = font_size
         self.set_text(text)

@@ -1,6 +1,7 @@
 
 from enum import Enum
 from loop import Loop
+from map import Map
 from map_config import MapConfig
 
 from menu import MENU_RESULT, LoadMenu, MainMenu, NewMenu, SettingsMenu
@@ -37,15 +38,19 @@ class StateBroker:
                     self.__state = RUN_STATE.MENU
                 case RUN_STATE.NEW_GAME:
                     menu = NewMenu(self.__map_cfg, self.__settings)
-                    if menu.show() == MENU_RESULT.OK:
-                        Loop().run()
+                    r = menu.show()
+                    if r == MENU_RESULT.NEW: 
+                        mp = Map(self.__map_cfg, self.__settings)
+                        Loop(mp, self.__map_cfg, self.__settings).run()
                     self.__state = RUN_STATE.MENU
                 case RUN_STATE.LOAD_GAME:
                     menu = LoadMenu()
-                    if menu.show(self.__map_cfg) == MENU_RESULT.OK:
-                        Loop().run()
+                    r = menu.show(self.__map_cfg)
+                    if r == MENU_RESULT.LOAD: 
+                        mp = Map(self.__map_cfg, self.__settings)
+                        Loop(mp, self.__map_cfg, self.__settings).run()
                     self.__state = RUN_STATE.MENU
-    
+
     def __init__(self) -> None:
         self.__state = RUN_STATE.MENU
         self.__map_cfg = MapConfig()

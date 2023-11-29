@@ -122,10 +122,10 @@ class NewMenu(Menu):
 
         err_label = Label(text='', fg=Color.RED, border_width=0, border=Color.RED)
         name_label = Label(text='World Title', border_width=0)
-        self.__name = Text(text='<Name>' ,width=500, border_width=0, border=Color.RED, padx=5, pady=5)
-        self.__auto_gen = CheckBox(text='Generate', value=map.auto_gen)
-        cancel = Button(text='Cancel', callback=lambda:fnc(self, MENU_RESULT.CANCEL), width=btn_width, border=Color.GREY, bg=Color.LIGHT_GRAY)
-        start = Button(text='Start', callback=lambda:fnc(self, MENU_RESULT.NEW), width=btn_width, border=Color.GREY, bg=Color.LIGHT_GRAY)
+        self.__name = Text(text='Name' ,width=500, border_width=0, border=Color.RED)
+        self.__auto_gen = CheckBox(text='Generate', value=map.auto_gen, fg=Color.BLACK)
+        cancel = Button(text='Cancel', callback=lambda:fnc(self, MENU_RESULT.CANCEL), width=btn_width, fg=Color.BLACK, border=Color.GREY, bg=Color.LIGHT_GRAY)
+        start = Button(text='Start', callback=lambda:fnc(self, MENU_RESULT.NEW), width=btn_width, fg=Color.BLACK, border=Color.GREY, bg=Color.LIGHT_GRAY)
 
         self.insert(name_label, 0, 0, ALIGN.CENTER)
         self.insert(self.__name, 1, 0, ALIGN.LEFT)

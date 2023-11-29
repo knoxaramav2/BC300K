@@ -20,8 +20,8 @@ class Display:
     def render(self):
         pygame.display.update()
 
-    def clear(self):
-        self.__canvas.fill(Color.BLACK.value)
+    def clear(self, clr:Color=Color.BLACK):
+        self.__canvas.fill(clr.value)
 
     def __init__(self):
         pygame.display.init()
