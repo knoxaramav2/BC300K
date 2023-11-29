@@ -5,7 +5,7 @@ from enum import Enum
 from UI import *
 from UI import Control
 from colors import Color
-from config import GetConfig
+from config import get_config
 from display import Display
 from map_config import MapConfig
 from settings import Settings
@@ -83,7 +83,7 @@ class LoadMenu(Menu):
     def __init__(self, map:MapConfig):
         self.__map = map
 
-        cfg = GetConfig()
+        cfg = get_config()
         width, height = cfg.win_dim
         super().__init__( width=width, height=height, border_width=0)
 
@@ -99,7 +99,7 @@ class NewMenu(Menu):
         self.__map = map
         self.__settings = stt
 
-        cfg = GetConfig()
+        cfg = get_config()
         width, height = cfg.win_dim
         super().__init__( width=width, height=height, border_width=0)
         
@@ -142,7 +142,7 @@ class SettingsMenu(Menu):
     _settings       : Settings
 
     def __init__(self, stt:Settings):
-        cfg = GetConfig()
+        cfg = get_config()
         width, height = cfg.win_dim
         super().__init__( width=width, height=height, border_width=0)
 
@@ -166,7 +166,7 @@ class SettingsMenu(Menu):
 class MainMenu(Menu):
 
     def __init__(self):
-        cfg = GetConfig()
+        cfg = get_config()
         width, height = cfg.win_dim
         super().__init__( width=width, height=height, border_width=0)
 

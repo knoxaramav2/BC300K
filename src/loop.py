@@ -28,11 +28,11 @@ class Loop:
 
     def __loop(self):
         while self.__is_active:
-            self.__display.clear()
+            #self.__display.clear()
 
             self.__handle_events()
             
-            self.__display.render()
+            #self.__display.render()
 
     def run(self):
         self.__is_active = True

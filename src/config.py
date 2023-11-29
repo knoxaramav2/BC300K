@@ -31,7 +31,7 @@ class Config:
 
 __inst__: Config = None
 
-def GetConfig():
+def get_config():
     global __inst__
     if __inst__ == None:
         __inst__ = Config()

@@ -3,7 +3,7 @@ import pygame
 from pygame import Surface
 from colors import Color
 
-from config import Config, GetConfig
+from config import Config, get_config
 
 
 class Display:
@@ -30,7 +30,7 @@ class Display:
         w = pygame.display.Info().current_w
         h = pygame.display.Info().current_h
         self.__screen_dim = (w, h)
-        self.__cfg = GetConfig()
+        self.__cfg = get_config()
         t_dim = self.__cfg.win_dim
         self.__canvas = pygame.display.set_mode((t_dim[0], t_dim[1]))
         self.__clock = pygame.time.Clock()

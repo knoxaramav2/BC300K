@@ -172,8 +172,6 @@ class Label(Control):
     def set_text(self, text:str):
         font = pygame.font.SysFont(self.__font, self.__font_size)
         self.__text = font.render(text, False, self._fg_color.value)
-        self._bounds.width = self.__text.get_width()
-        self._bounds.height = self.__text.get_height()
 
     def update(self):
         super().update()
@@ -181,8 +179,6 @@ class Label(Control):
 
     def move(self, x: int, y: int, align:ALIGN=ALIGN.TOP_LEFT):
         super().move(x, y, align)
-        self._bounds.width = self.__text.get_width()
-        self._bounds.height = self.__text.get_height()
 
     def __init__(self, 
                  text='', font='arial',
@@ -197,6 +193,13 @@ class Label(Control):
         self.__font = font
         self.__font_size = font_size
         self.set_text(text)
+
+        if width == 0: self._bounds.width = self.__text.get_width()+(padx*2)
+        else: self._bounds.width = width+(padx*2)
+        
+        if height == 0: self._bounds.height = self.__text.get_height()+(pady*2)
+        else: self._bounds.height = height+(pady*2)
+
         self.move(pos_x, pos_y, align=ALIGN.CENTER)
 
 class Clickable(Control):
