@@ -18,5 +18,7 @@ class MapConfig:
 
     map_size            : MapSize = MapSize.NORMAL
 
+    temp                : float = 0.30
+
     def __init__(self):
         pass
