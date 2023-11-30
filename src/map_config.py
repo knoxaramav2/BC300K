@@ -4,6 +4,8 @@ from enum import Enum
 
 class MapSize(Enum):
 
+
+    MICRO = (16, 9)
     TINY  = (160, 90)
     SMALL = (320, 180)
     NORMAL = (640, 360)
@@ -16,7 +18,7 @@ class MapConfig:
     name                : str = ''
     map_name            : str = ''#Can be empty if auto_gen true
 
-    map_size            : MapSize = MapSize.NORMAL
+    map_size            : MapSize = MapSize.MICRO
 
     temp                : float = 0.30
 

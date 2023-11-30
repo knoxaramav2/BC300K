@@ -3,6 +3,7 @@ from enum import Enum
 from loop import Loop
 from map import Map
 from map_config import MapConfig
+from map_gen import MapGen
 
 from menu import MENU_RESULT, LoadMenu, MainMenu, NewMenu, SettingsMenu
 from settings import Settings
@@ -21,6 +22,7 @@ class StateBroker:
     __state         : RUN_STATE
     __map_cfg       : MapConfig
     __settings      : Settings
+    __gen           : MapGen
 
     def run(self):
         while self.__state != RUN_STATE.EXIT:
@@ -40,14 +42,15 @@ class StateBroker:
                     menu = NewMenu(self.__map_cfg, self.__settings)
                     r = menu.show()
                     if r == MENU_RESULT.NEW: 
-                        mp = Map(self.__map_cfg, self.__settings)
+                        #mp = Map(self.__map_cfg, self.__settings)
+                        mp = self.__gen.warp_gen()
                         Loop(mp, self.__map_cfg, self.__settings).run()
                     self.__state = RUN_STATE.MENU
                 case RUN_STATE.LOAD_GAME:
                     menu = LoadMenu()
                     r = menu.show(self.__map_cfg)
                     if r == MENU_RESULT.LOAD: 
-                        mp = Map(self.__map_cfg, self.__settings)
+                        mp = self.__gen.warp_gen()
                         Loop(mp, self.__map_cfg, self.__settings).run()
                     self.__state = RUN_STATE.MENU
 
@@ -55,5 +58,6 @@ class StateBroker:
         self.__state = RUN_STATE.MENU
         self.__map_cfg = MapConfig()
         self.__settings = Settings()
+        self.__gen = MapGen(self.__map_cfg, self.__settings)
 
 
