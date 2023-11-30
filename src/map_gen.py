@@ -1,11 +1,13 @@
 
 import math
+import random
+import time
 import pygame
 from UI import Label
 from colors import Color
 from config import Config, get_config
 from display import Display, get_display
-from map import Map, NGon
+from map import Cell, Map, NGon
 from map_config import MapConfig
 from settings import Settings
 from shapes import hexagon
@@ -26,42 +28,48 @@ class MapGen:
         self.__dsp.render()
 
     def __create_pent_map(self):
-        map = Map()
-        r = self.__cfg.win_dim[0]/self.__map_cfg.map_size.value[0]
+        map = Map(self.__map_cfg)
 
         m_x = self.__map_cfg.map_size.value[0]
         m_y = self.__map_cfg.map_size.value[1]
+        r = (self.__cfg.win_dim[0]/m_x)*(4.0/5.0)
+        # m_x = 1
+        # m_y = 2
 
-        m_x = 4
-        m_y = 1
         a_x = math.cos(math.radians(60))
         a_y = math.sin(math.radians(60))
+        dx = 0
+        dy = (5.0/6.0)*r
 
         for y in range(m_y):
+            clrb = random.choice(list(Color))
+            clrf = random.choice(list(Color))
             print()
             for x in range(m_x):
-                h:NGon
-                cx = (r+(4*r*x))*a_x+(5*(y%2)/3*r)
-                cy = (r+(2*r*y))*a_y+((x%2)*5/3*r)
+                cx = (r+(3*r*x))*a_x+((y%2-1)*dx)
+                cy = (r+(2*r*y))*a_y+((x%2)*dy)-(2*r)
+                
                 h=hexagon((cx, cy), r)
-                h.draw(self.__cvc, Color.CYAN, False, True)
-                self.__prnt(f'| {cx}, {cy} | ({x}, {y})')
-                pygame.display.update()
-                pygame.event.clear()
-            
-            
+                if x > 0:
+                    last = map.get(x-1, y)
+                    last.add_neighbor(h, 30)
+                if y > 0:
+                    last = map.get(x, y-1)
+                    last.add_neighbor(h, 30)
+                map.set(h, x, y)
 
-        #base = hexagon((0, 0), r)
-        #base.render(self.__cvc, Color.CYAN, False, True)
+            self.__prnt(f'| {cx}, {cy} | ({x}, {y})')
+            pygame.event.clear()
+        self.__dsp.clear()
+        map.draw()
         pygame.display.update()
         return map
 
     def warp_gen(self) -> Map:
         self.__dsp.clear()
         self.__prnt('<<<WARP GEN>>>')
+        self.__dsp.clear()
         map = self.__create_pent_map()
-
-
         self.__prnt('<<<DONE>>>')
         return map
 

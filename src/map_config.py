@@ -5,7 +5,7 @@ from enum import Enum
 class MapSize(Enum):
 
 
-    MICRO = (16, 9)
+    MICRO = (32, 18)
     TINY  = (160, 90)
     SMALL = (320, 180)
     NORMAL = (640, 360)
