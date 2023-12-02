@@ -24,11 +24,20 @@ class MapGen:
     __cvc           : pygame.Surface
     __map           : Map
 
-    RANDOM          : float = 1.1
-    CHAIN_MAG       : float = 0.09
+    PERT_RAND       : float = 1.1
+    PERT_MAG        : float = 0.09
+    PERT_COEF       : float = 0.95
+    PERT_CUTTOFF    : float = 0.01
+
+    OCEAN_RAND      : float = 1.1
+    OCEAN_MAG       : float = 0.09
+    OCEAN_COEF      : float = 0.95
+    OCEAN_CUTTOFF   : float = 0.01
+
+    LAND_RAND       : float = 1.1
     LAND_MAG        : float = 0.50
-    CHAIN_COEF      : float = 0.95
-    CUTTOFF         : float = 0.01
+    LAND_COEF       : float = 0.95
+    LAND_CUTOFF     : float = 0.01
 
     def __prnt(self, txt:str):
         print(txt)
@@ -46,7 +55,7 @@ class MapGen:
 
     def __grow_land(self, x:int, y:int, amnt:float):
         cell = self.__map.get(x, y)
-        if cell == None or amnt < self.CUTTOFF: 
+        if cell == None or amnt < self.LAND_CUTOFF: 
             return
         clm = self.__get_climate(y)
         lnd = Land(clm)
@@ -61,7 +70,7 @@ class MapGen:
                     continue
                 if isinstance(n.content, Land):
                     continue
-                r_val = amnt*self.CHAIN_COEF * abs(np.random.normal(scale=0.45, loc=0))
+                r_val = amnt*self.LAND_COEF * abs(np.random.normal(scale=0.45, loc=0))
                 self.__grow_land(xx, yy, r_val)
 
     def __spawn_land(self):
@@ -179,7 +188,7 @@ class MapGen:
 
     def __perturb_cell(self, x:int, y:int, amnt:float):
         cell = self.__map.get(x, y)
-        if cell == None or amnt < self.CUTTOFF: return
+        if cell == None or amnt < self.PERT_CUTTOFF: return
         pygame.event.clear()
         self.__dsp.clear()
         self.__map.draw()
@@ -194,8 +203,8 @@ class MapGen:
             if n1 != None: pnts.append(n1.center)
             if n2 != None: pnts.append(n2.center)
             box = self.__min_box(pnts)
-            dx = np.random.uniform(box[0]-cell.center[0], box[1]-cell.center[0])*amnt*np.random.normal(scale=self.RANDOM)
-            dy = np.random.uniform(box[2]-cell.center[1], box[3]-cell.center[1])*amnt*np.random.normal(scale=self.RANDOM)
+            dx = np.random.uniform(box[0]-cell.center[0], box[1]-cell.center[0])*amnt*np.random.normal(scale=self.PERT_RAND)
+            dy = np.random.uniform(box[2]-cell.center[1], box[3]-cell.center[1])*amnt*np.random.normal(scale=self.PERT_RAND)
             v.pos = (v.pos[0] + dx, v.pos[1] + dy)
 
             self.__map.draw()
@@ -203,7 +212,7 @@ class MapGen:
             for cy in range(-1, 1):
                 for cx in range(-1, 1):
                     if cy == 0 and cx == 0: continue
-                    self.__perturb_cell(cx, cy, amnt*self.CHAIN_COEF)
+                    self.__perturb_cell(cx, cy, amnt*self.PERT_COEF)
 
     def __perturb(self, map:Map):
 
@@ -214,7 +223,7 @@ class MapGen:
             x = int(rng.uniform(0, map.size()[0]-1))
             y = int(rng.uniform(0, map.size()[1]-1))
 
-            self.__perturb_cell(x, y, self.CHAIN_MAG)
+            self.__perturb_cell(x, y, self.PERT_MAG)
             #map.draw()
             map.render(self.__cvc)
             pygame.event.clear()
@@ -226,7 +235,7 @@ class MapGen:
         self.__dsp.clear()
         map = self.__create_pent_map()
         self.__map = map
-        #self.__perturb(map)
+        self.__perturb(map)
         self.__spawn_ocean()
         self.__spawn_land()
         self.__prnt('<<<DONE>>>')
