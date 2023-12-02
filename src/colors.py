@@ -4,6 +4,7 @@ from enum import Enum
 
 class Color(Enum):
 
+    CLEAR       = (-1, -1, -1)#Special - no render
     BLACK       = (0, 0, 0)
     WHITE       = (255, 255, 255)
     DARK_GREY   = (64, 64, 64)

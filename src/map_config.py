@@ -24,3 +24,10 @@ class MapConfig:
 
     def __init__(self):
         pass
+
+__inst__: MapConfig = None
+def get_map_config():
+    global __inst__
+    if __inst__ == None:
+        __inst__ = MapConfig()
+    return __inst__

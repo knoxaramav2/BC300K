@@ -27,6 +27,7 @@ class Loop:
                 match e.key:
                     case pygame.K_ESCAPE: self.__pause = not self.__pause
                     case pygame.K_F5: self.__is_active = False
+                    case pygame.K_TAB: self.__settings.draw_outline = not self.__settings.draw_outline
                     case _:
                         pass
             elif e.type == pygame.MOUSEBUTTONDOWN:

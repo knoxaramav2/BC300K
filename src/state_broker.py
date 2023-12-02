@@ -2,11 +2,11 @@
 from enum import Enum
 from loop import Loop
 from map import Map
-from map_config import MapConfig
+from map_config import MapConfig, get_map_config
 from map_gen import MapGen
 
 from menu import MENU_RESULT, LoadMenu, MainMenu, NewMenu, SettingsMenu
-from settings import Settings
+from settings import Settings, get_settings
 
 
 RUN_STATE = Enum('run_state', [
@@ -56,8 +56,8 @@ class StateBroker:
 
     def __init__(self) -> None:
         self.__state = RUN_STATE.MENU
-        self.__map_cfg = MapConfig()
-        self.__settings = Settings()
+        self.__map_cfg = get_map_config()
+        self.__settings = get_settings()
         self.__gen = MapGen(self.__map_cfg, self.__settings)
 
 

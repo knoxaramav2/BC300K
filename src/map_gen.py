@@ -24,9 +24,10 @@ class MapGen:
     __cvc           : pygame.Surface
     __map           : Map
 
-    PERT_RAND       : float = 1.1
-    PERT_MAG        : float = 0.09
-    PERT_COEF       : float = 0.95
+    PERT_CYCLE_COEF : int = 10
+    PERT_RAND       : float = 1.35
+    PERT_MAG        : float = 0.135
+    PERT_COEF       : float = 0.93
     PERT_CUTTOFF    : float = 0.01
 
     OCEAN_RAND      : float = 1.1
@@ -60,7 +61,7 @@ class MapGen:
         clm = self.__get_climate(y)
         lnd = Land(clm)
         cell.content = lnd
-        cell.render(self.__cvc, auto_clr=True)
+        cell.render(self.__cvc, auto_clr=True, b_clr=None, f_clr=None)
         self.__prnt(f'LAND: {clm.name}')
 
         for xx in range(x-1, x+1):
@@ -77,10 +78,10 @@ class MapGen:
 
         sz = self.__map.size()
         rt = int(math.sqrt(sz[0]**2+sz[1]**2))
-
+        rng = np.random.default_rng(int(time.time()))
         for i in range(rt):
-            x = int(np.random.uniform(0, sz[0]))
-            y = int(np.random.uniform(0, sz[1]))
+            x = int(rng.uniform(0, sz[0]))
+            y = int(rng.uniform(0, sz[1]))
             self.__grow_land(x, y, self.LAND_MAG)
 
     def __spawn_ocean(self):
@@ -187,8 +188,9 @@ class MapGen:
         return (m_x, M_x, m_y, M_y)
 
     def __perturb_cell(self, x:int, y:int, amnt:float):
+        print(f'>>{amnt:.3}')
         cell = self.__map.get(x, y)
-        if cell == None or amnt < self.PERT_CUTTOFF: return
+        if cell == None or abs(amnt) < self.PERT_CUTTOFF: return
         pygame.event.clear()
         self.__dsp.clear()
         self.__map.draw()
@@ -203,9 +205,16 @@ class MapGen:
             if n1 != None: pnts.append(n1.center)
             if n2 != None: pnts.append(n2.center)
             box = self.__min_box(pnts)
-            dx = np.random.uniform(box[0]-cell.center[0], box[1]-cell.center[0])*amnt*np.random.normal(scale=self.PERT_RAND)
-            dy = np.random.uniform(box[2]-cell.center[1], box[3]-cell.center[1])*amnt*np.random.normal(scale=self.PERT_RAND)
+            rng = np.random.default_rng(int(time.time()))
+            dx = np.random.uniform(box[0]-cell.center[0], box[1]-cell.center[0])*amnt*rng.normal(scale=self.PERT_RAND)
+            dy = np.random.uniform(box[2]-cell.center[1], box[3]-cell.center[1])*amnt*rng.normal(scale=self.PERT_RAND)
             v.pos = (v.pos[0] + dx, v.pos[1] + dy)
+
+            for xx in range(x-1, x+1):
+                for yy in range(y-1, y+1):
+                    if x == xx and y == yy: continue
+                    r_amnt = amnt*self.PERT_COEF
+                    self.__perturb_cell(xx, yy, r_amnt*.07)
 
             self.__map.draw()
 
@@ -216,10 +225,11 @@ class MapGen:
 
     def __perturb(self, map:Map):
 
-        m_cycles = self.__map_cfg.map_size.value[0] * self.__map_cfg.map_size.value[1]
+        #m_cycles = self.__map_cfg.map_size.value[0] * self.__map_cfg.map_size.value[1]
+        m_cycles = self.__map_cfg.map_size.value[0]*self.PERT_CYCLE_COEF
 
-        rng = random
-        for i in range(m_cycles*2):
+        rng = np.random.default_rng(int(time.time()))
+        for i in range(m_cycles):
             x = int(rng.uniform(0, map.size()[0]-1))
             y = int(rng.uniform(0, map.size()[1]-1))
 

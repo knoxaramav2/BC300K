@@ -9,6 +9,7 @@ from colors import Color
 from display import Display, get_display
 from interface import Renderable
 from map_config import MapConfig
+from settings import Settings, get_settings
 
 
 CLIMATE = Enum('climate',[
@@ -137,24 +138,24 @@ class NGon(Renderable):
 
         #print(f'CONN: {src_idx} => {n_idx}')
 
-    def render(self, cvc:Surface, pos:tuple[float, float]=None, zoom:float=1.0, b_clr:Color=Color.GREY, f_clr:Color=Color.LIGHT_GRAY, auto_clr:bool=False):
+    def render(self, cvc:Surface, pos:tuple[float, float]=None, zoom:float=1.0, 
+               b_clr:Color=Color.GREY, f_clr:Color=Color.LIGHT_GRAY, auto_clr:bool=False):
         if self.content != None and auto_clr:
-            if isinstance(self.content, Water):
+            if isinstance(self.content, Water) and f_clr == None:
                 f_clr = Color.BLUE if self.content._salt else Color.CYAN
-            elif isinstance(self.content, Land):
+            elif isinstance(self.content, Land) and f_clr == None:
                 match self.content._climate:
                     case CLIMATE.DRY: f_clr = Color.ORANGE
                     case CLIMATE.TROPICAL: f_clr = Color.GREEN
                     case CLIMATE.TEMPERATE: f_clr = Color.BROWN
                     case _: f_clr = Color.WHITE
-        
         self.draw(cvc, f_clr, b_clr)
 
     def draw(self, cvc, fill_clr:Color=Color.LIGHT_GRAY, border_clr:Color=Color.GREY):
         coords = [v.pos for v in self.vertices]
-        if fill_clr != None:
+        if fill_clr != None and fill_clr != Color.CLEAR:
             pygame.draw.polygon(cvc, fill_clr.value, coords)
-        if border_clr != None:
+        if border_clr != None and border_clr != Color.CLEAR:
             pygame.draw.lines(cvc, border_clr.value, True, coords)
 
     def calc_center(self):
@@ -198,6 +199,7 @@ class Map(Renderable):
     __grid          : list[list[NGon]]
     __dsp           : Display
     __cvc           : pygame.Surface
+    __stt           : Settings
 
     def select_fuzzed(self, fx:float, fy:float, fuzz:float=5.0) -> Vertex:
         #TODO radiating approach
@@ -216,7 +218,8 @@ class Map(Renderable):
                pos: tuple[float, float] = None, 
                zoom: float = 1.0,
                auto_clr:bool=True):
-        self.draw(auto_clr=auto_clr)
+        b_clr = Color.CLEAR if not self.__stt.draw_outline else Color.CYAN
+        self.draw(auto_clr=auto_clr, f_clr=None, b_clr=b_clr)
 
     def draw(self, b_clr:Color=Color.CYAN, f_clr:Color=None, auto_clr:bool=False):
         for y in self.__grid:
@@ -241,5 +244,6 @@ class Map(Renderable):
     def __init__(self, map_cfg:MapConfig):
         self.__size = map_cfg.map_size.value
         self.__dsp = get_display()
+        self.__stt = get_settings()
         self.__cvc = self.__dsp.get_canvas()
         self.__init_grid()
