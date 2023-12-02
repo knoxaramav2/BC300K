@@ -26,6 +26,7 @@ class Loop:
             if e.type == pygame.KEYDOWN:
                 match e.key:
                     case pygame.K_ESCAPE: self.__pause = not self.__pause
+                    case pygame.K_F5: self.__is_active = False
                     case _:
                         pass
             elif e.type == pygame.MOUSEBUTTONDOWN:

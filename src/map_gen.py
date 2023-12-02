@@ -9,7 +9,7 @@ from UI import Label
 from colors import Color
 from config import Config, get_config
 from display import Display, get_display
-from map import Cell, Map, NGon, Vertex
+from map import CLIMATE, Cell, Land, Map, NGon, Vertex, Water
 from map_config import MapConfig
 from settings import Settings
 from shapes import hexagon
@@ -26,6 +26,7 @@ class MapGen:
 
     RANDOM          : float = 1.1
     CHAIN_MAG       : float = 0.09
+    LAND_MAG        : float = 0.50
     CHAIN_COEF      : float = 0.95
     CUTTOFF         : float = 0.01
 
@@ -34,6 +35,57 @@ class MapGen:
         self.__info.set_text(txt)
         self.__info.update()
         self.__dsp.render()
+
+    def __get_climate(self, lat:int) -> CLIMATE:
+        m_y = self.__map.size()[1]
+        r = abs(float(lat)/float(m_y)-0.5)
+        if r < 0.10: return CLIMATE.DRY
+        if r < 0.25: return CLIMATE.TROPICAL
+        if r < 0.35: return CLIMATE.TEMPERATE
+        return CLIMATE.POLAR
+
+    def __grow_land(self, x:int, y:int, amnt:float):
+        cell = self.__map.get(x, y)
+        if cell == None or amnt < self.CUTTOFF: 
+            return
+        clm = self.__get_climate(y)
+        lnd = Land(clm)
+        cell.content = lnd
+        cell.render(self.__cvc, auto_clr=True)
+        self.__prnt(f'LAND: {clm.name}')
+
+        for xx in range(x-1, x+1):
+            for yy in range(y-1, y+1):
+                n = self.__map.get(xx, yy)
+                if n == None: 
+                    continue
+                if isinstance(n.content, Land):
+                    continue
+                r_val = amnt*self.CHAIN_COEF * abs(np.random.normal(scale=0.45, loc=0))
+                self.__grow_land(xx, yy, r_val)
+
+    def __spawn_land(self):
+
+        sz = self.__map.size()
+        rt = int(math.sqrt(sz[0]**2+sz[1]**2))
+
+        for i in range(rt):
+            x = int(np.random.uniform(0, sz[0]))
+            y = int(np.random.uniform(0, sz[1]))
+            self.__grow_land(x, y, self.LAND_MAG)
+
+    def __spawn_ocean(self):
+        map = self.__map
+        size = self.__map.size()
+        for y in range(size[1]):
+            for x in range(size[0]):
+                cell = map.get(x, y)
+                clm = self.__get_climate(y)
+                oc = Water(clm, True)
+                cell.content = oc
+                cell.render(self.__cvc, auto_clr=True)
+            prc = y/size[1]
+            self.__prnt(f'GEN OCEANS: CLIMATE - {clm.name} @ %{prc} ')
 
     def __create_pent_map(self):
         map = Map(self.__map_cfg)
@@ -131,7 +183,7 @@ class MapGen:
         pygame.event.clear()
         self.__dsp.clear()
         self.__map.draw()
-        self.__prnt(f'PERTURB: {cell.center[0]:.2}, {cell.center[1]:.2} : {amnt}')
+        #self.__prnt(f'PERTURB: {cell.center[0]:.2}, {cell.center[1]:.2} : {amnt}')
 
         for i in range(len(cell.vertices)):
             v = cell.vertices[i]
@@ -163,7 +215,8 @@ class MapGen:
             y = int(rng.uniform(0, map.size()[1]-1))
 
             self.__perturb_cell(x, y, self.CHAIN_MAG)
-            map.draw()
+            #map.draw()
+            map.render(self.__cvc)
             pygame.event.clear()
             self.__prnt(f'CYCLE: {i}')
 
@@ -173,7 +226,9 @@ class MapGen:
         self.__dsp.clear()
         map = self.__create_pent_map()
         self.__map = map
-        self.__perturb(map)
+        #self.__perturb(map)
+        self.__spawn_ocean()
+        self.__spawn_land()
         self.__prnt('<<<DONE>>>')
         return map
 

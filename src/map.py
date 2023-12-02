@@ -20,7 +20,7 @@ class Vertex:
     def __init__(self, x:float, y:float) -> None:
         self.pos = (x, y)
 
-class NGon:
+class NGon(Renderable):
 
     vertices        : list[Vertex]
     center          : tuple[float, float]
@@ -137,6 +137,19 @@ class NGon:
 
         #print(f'CONN: {src_idx} => {n_idx}')
 
+    def render(self, cvc:Surface, pos:tuple[float, float]=None, zoom:float=1.0, b_clr:Color=Color.GREY, f_clr:Color=Color.LIGHT_GRAY, auto_clr:bool=False):
+        if self.content != None and auto_clr:
+            if isinstance(self.content, Water):
+                f_clr = Color.BLUE if self.content._salt else Color.CYAN
+            elif isinstance(self.content, Land):
+                match self.content._climate:
+                    case CLIMATE.DRY: f_clr = Color.ORANGE
+                    case CLIMATE.TROPICAL: f_clr = Color.GREEN
+                    case CLIMATE.TEMPERATE: f_clr = Color.BROWN
+                    case _: f_clr = Color.WHITE
+        
+        self.draw(cvc, f_clr, b_clr)
+
     def draw(self, cvc, fill_clr:Color=Color.LIGHT_GRAY, border_clr:Color=Color.GREY):
         coords = [v.pos for v in self.vertices]
         if fill_clr != None:
@@ -157,7 +170,7 @@ class NGon:
         self.vertices = vertices
         self.neighbors = [None]*len(vertices)
         self.calc_center()
-
+        self.content = None
         self.__dsp = get_display()
         self.__cvc = self.__dsp.get_canvas()
 
@@ -171,13 +184,13 @@ class Cell:
 class Water(Cell):
     _salt           : bool
 
-    def __init__(self, cell:Cell, salt:bool=False):
-        super().__init__(cell)
+    def __init__(self, clm:CLIMATE, salt:bool=False):
+        super().__init__(clm)
         self._salt = salt
 
 class Land(Cell):
-    def __init__(self, cell:Cell):
-        super().__init__(cell)
+    def __init__(self, clm:CLIMATE):
+        super().__init__(clm)
 
 class Map(Renderable):
 
@@ -200,15 +213,17 @@ class Map(Renderable):
 
     def render(self, 
                cvc: Surface, 
-               pos: tuple[float, float], 
-               zoom: float):
-        self.draw()
+               pos: tuple[float, float] = None, 
+               zoom: float = 1.0,
+               auto_clr:bool=True):
+        self.draw(auto_clr=auto_clr)
 
-    def draw(self):
+    def draw(self, b_clr:Color=Color.CYAN, f_clr:Color=None, auto_clr:bool=False):
         for y in self.__grid:
             for x in y:
                 if x == None: break
-                x.draw(self.__cvc, None, Color.CYAN)
+                x.render(self.__cvc, b_clr=b_clr, f_clr=f_clr,auto_clr=auto_clr)
+                #x.draw(self.__cvc, None, Color.CYAN)
 
     def set(self, cell:NGon, x:int, y:int):
         self.__grid[y][x] = cell
