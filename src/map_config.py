@@ -7,8 +7,8 @@ class MapSize(Enum):
 
     MICRO = (16, 9)
     TINY  = (32, 18)
-    SMALL = (64, 36)
-    NORMAL = (128, 72)
+    SMALL = (50, 22)
+    NORMAL = (100, 44)
     LARGE = (256, 144)
     XLARGE = (512, 288)
 
@@ -18,7 +18,7 @@ class MapConfig:
     name                : str = ''
     map_name            : str = ''#Can be empty if auto_gen true
 
-    map_size            : MapSize = MapSize.TINY
+    map_size            : MapSize = MapSize.NORMAL
 
     temp                : float = 0.30
 
