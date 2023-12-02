@@ -1,10 +1,13 @@
 from __future__ import annotations
 from enum import Enum
+from tkinter import Canvas
 
 import pygame
+from pygame import Rect, Surface
 
 from colors import Color
 from display import Display, get_display
+from interface import Renderable
 from map_config import MapConfig
 
 
@@ -23,7 +26,10 @@ class NGon:
     center          : tuple[float, float]
     neighbors       : list[NGon]
     content         : Cell
-    DEF_FUZZ        : int = 1.0
+    DEF_FUZZ        : int = 3.0
+
+    __dsp           : Display
+    __cvc           : Canvas
 
     def local_sibling_vertex(self, trg:Vertex):
         for v in self.vertices:
@@ -62,6 +68,13 @@ class NGon:
             idx_1 += 1
 
         return edges
+
+    def get_neighbor(self, idx:int):
+        
+        if idx < 0: idx = len(self.neighbors) -1 
+        elif idx >= len(self.neighbors): idx = 0
+
+        return self.neighbors[idx]
 
     def get_edge(self, idx:int=0) -> tuple[Vertex, Vertex]:
         length = len(self.vertices)
@@ -107,9 +120,23 @@ class NGon:
             self.vertices[v1_idx] = tv1
             self.vertices[v2_idx] = tv2
 
-            # tv1.pos = (tv1.pos[0], tv1.pos[1]-20) 
-            # tv2.pos = (tv2.pos[0], tv2.pos[1]+20) 
-            
+    def add_neighbor_edge(self, nghbr:NGon, n_idx:int, src_idx:int):
+        ns = nghbr.get_edge(n_idx)
+        
+        src_e = self.get_edge(src_idx)
+        vi1 = self.vertex_index(src_e[0])
+        vi2 = self.vertex_index(src_e[1])
+        ni1 = nghbr.vertex_index(ns[0])
+        ni2 = nghbr.vertex_index(ns[1])
+
+        self.vertices[vi1] = nghbr.vertices[ni2]
+        self.vertices[vi2] = nghbr.vertices[ni1]
+
+        self.neighbors[src_idx] = nghbr
+        nghbr.neighbors[n_idx] = self
+
+        #print(f'CONN: {src_idx} => {n_idx}')
+
     def draw(self, cvc, fill_clr:Color=Color.LIGHT_GRAY, border_clr:Color=Color.GREY):
         coords = [v.pos for v in self.vertices]
         if fill_clr != None:
@@ -117,17 +144,22 @@ class NGon:
         if border_clr != None:
             pygame.draw.lines(cvc, border_clr.value, True, coords)
 
-    def __init__(self, vertices:list[Vertex]):
-        self.vertices = vertices
-        self.neighbors = [None]*len(vertices)
-
+    def calc_center(self):
         x = 0
         y = 0
-        for v in vertices:
+        for v in self.vertices:
             x += v.pos[0]
             y += v.pos[1]
         
-        self.center = (x/len(vertices), y/len(vertices))
+        self.center = (x/len(self.vertices), y/len(self.vertices))
+
+    def __init__(self, vertices:list[Vertex]):
+        self.vertices = vertices
+        self.neighbors = [None]*len(vertices)
+        self.calc_center()
+
+        self.__dsp = get_display()
+        self.__cvc = self.__dsp.get_canvas()
 
 class Cell:
 
@@ -147,25 +179,46 @@ class Land(Cell):
     def __init__(self, cell:Cell):
         super().__init__(cell)
 
-class Map:
+class Map(Renderable):
 
     __size          : tuple[int, int]
     __grid          : list[list[NGon]]
     __dsp           : Display
     __cvc           : pygame.Surface
 
+    def select_fuzzed(self, fx:float, fy:float, fuzz:float=5.0) -> Vertex:
+        #TODO radiating approach
+        for y in self.__grid:
+            for x in y:
+                if x == None: continue
+                for v in x.vertices:
+                    dx = abs(v.pos[0] - fx)
+                    dy = abs(v.pos[1] - fy)
+                    if dx < fuzz and dy < fuzz: 
+                        return v
+        return None
+
+    def render(self, 
+               cvc: Surface, 
+               pos: tuple[float, float], 
+               zoom: float):
+        self.draw()
+
     def draw(self):
         for y in self.__grid:
             for x in y:
-                if x == None: 
-                    break
-                x.draw(self.__cvc)
+                if x == None: break
+                x.draw(self.__cvc, None, Color.CYAN)
 
     def set(self, cell:NGon, x:int, y:int):
         self.__grid[y][x] = cell
 
     def get(self, x:int, y:int) -> NGon:
+        if x < 0 or y < 0 or x >= self.__size[0] or y >= self.__size[1]: return None
         return self.__grid[y][x]
+
+    def size(self):
+        return self.__size
 
     def __init_grid(self):
         self.__grid = [[None]*(self.__size[0]) for _ in range(self.__size[1])]
