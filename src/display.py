@@ -23,6 +23,9 @@ class Display:
     def clear(self, clr:Color=Color.BLACK):
         self.__canvas.fill(clr.value)
 
+    def screen_dim(self) -> tuple[int, int]:
+        return self.__screen_dim
+
     def __init__(self):
         pygame.display.init()
         pygame.font.init()

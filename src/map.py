@@ -2,6 +2,7 @@ from __future__ import annotations
 from enum import Enum
 from tkinter import Canvas
 
+import math
 import pygame
 from pygame import Rect, Surface
 
@@ -23,10 +24,11 @@ class Vertex:
 
 class NGon(Renderable):
 
+    box             : tuple[float, float, float, float]
     vertices        : list[Vertex]
     center          : tuple[float, float]
     neighbors       : list[NGon]
-    content         : Cell
+    content         : Cella
     DEF_FUZZ        : int = 3.0
 
     __dsp           : Display
@@ -158,22 +160,79 @@ class NGon(Renderable):
         if border_clr != None and border_clr != Color.CLEAR:
             pygame.draw.lines(cvc, border_clr.value, True, coords)
 
-    def calc_center(self):
+    def calc_geom(self):
         x = 0
         y = 0
+        min_x = self.vertices[0].pos[0]
+        min_y = self.vertices[0].pos[1]
+        max_x = min_x
+        max_y = min_y
         for v in self.vertices:
             x += v.pos[0]
             y += v.pos[1]
+            min_x = min(min_x, v.pos[0])
+            min_y = min(min_y, v.pos[1])
+            max_x = max(max_x, v.pos[0])
+            max_y = max(max_y, v.pos[1])
+        self.box = (min_x, min_y, max_x, max_y)
+
         
         self.center = (x/len(self.vertices), y/len(self.vertices))
+
+    def in_box(self, x:float, y:float):
+        b = self.box
+        return ((x >= b[0] and x <= b[2]) and (y >= b[1] and y <= b[3]))
+
+    def __intersection(self, e1, e2) -> Vertex:
+        p1 = sorted(e1, key=lambda c:c[0])
+        p2 = sorted(e2, key=lambda c:c[0])
+        
+        y1 = sorted(e1, key=lambda c:c[1])
+        y2 = sorted(e2, key=lambda c:c[1])
+        
+        t1 = (p1[1][1]-p1[0][1])/(p1[1][0]-p1[0][0])
+        c1 = p1[0][1]-p1[0][0]*t1
+        
+        t2 = (p2[1][1]-p2[0][1])/(p2[1][0]-p2[0][0])
+        c2 = p2[0][1]-p2[0][0]*t2
+                
+        if t1 == t2: return None
+        x = (c2 - c1)/(t1-t2)
+        yi = x*t2+c2
+        
+        bc = (
+            (x >= p1[0][0] and x <= p1[1][0] and yi >= y1[0][1] and yi <= y1[1][1]) and
+            (x >= p2[0][0] and x <= p2[1][0] and yi >= y2[0][1] and yi <= y2[1][1])
+        )
+
+        return (x, yi) if bc else None
+
+    def in_border(self, x:float, y:float):
+        
+        if not self.in_box(x, y):
+            return False
+
+        b = self.box
+        t_e = ((x, y), (b[2]+100, y))
+
+        intrs = 0
+        for i in range(len(self.vertices)):
+            e = self.get_edge(i)
+            p1, p2 = e[0].pos, e[1].pos
+            intr = self.__intersection(t_e, (p1, p2))
+            if intr != None:
+                intrs += 1
+
+        print(f'{x}, {y} | BNDS: {intrs}')
+        return intrs%2 == 1
 
     def __init__(self, vertices:list[Vertex]):
         self.vertices = vertices
         self.neighbors = [None]*len(vertices)
-        self.calc_center()
         self.content = None
         self.__dsp = get_display()
         self.__cvc = self.__dsp.get_canvas()
+        self.calc_geom()
 
 class Cell:
 
@@ -200,6 +259,22 @@ class Map(Renderable):
     __dsp           : Display
     __cvc           : pygame.Surface
     __stt           : Settings
+
+    def __cell_coord(self, cell:NGon):
+        for y in range(len(self.__grid)):
+            for x in range(len(self.__grid[y])):
+                if cell == self.__grid[y][x]:
+                    return x, y
+        return -1, -1
+
+    def select_at(self, x:float, y:float) -> NGon:
+        for r in self.__grid:
+            for c in r:
+                if c.in_border(x, y):
+                #if c.in_box(x, y):
+                    _x, _y = self.__cell_coord(c)
+                    print(f'Select @ {_x}, {_y}')
+                    return c
 
     def select_fuzzed(self, fx:float, fy:float, fuzz:float=5.0) -> Vertex:
         #TODO radiating approach

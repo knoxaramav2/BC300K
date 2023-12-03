@@ -24,9 +24,9 @@ class MapGen:
     __cvc           : pygame.Surface
     __map           : Map
 
-    PERT_CYCLE_COEF : int = 5
-    PERT_RAND       : float = 1.35
-    PERT_MAG        : float = 0.07
+    PERT_CYCLE_COEF : int = 3
+    PERT_RAND       : float = 1.20
+    PERT_MAG        : float = 0.04
     PERT_COEF       : float = 0.15
     PERT_CUTTOFF    : float = 0.01
 
@@ -187,6 +187,14 @@ class MapGen:
 
         return (m_x, M_x, m_y, M_y)
 
+    def __recalc(self):
+        
+        sz = self.__map.size()
+        for y in range(sz[1]):
+            for x in range(sz[0]):
+                self.__map.get(x, y).calc_geom()
+            self.__prnt(f'RECALC {y}')
+
     def __perturb_cell(self, x:int, y:int, amnt:float, prev:NGon=None):
         cell = self.__map.get(x, y)
         if cell == None or cell == prev or abs(amnt) < self.PERT_CUTTOFF: return
@@ -258,6 +266,7 @@ class MapGen:
         map = self.__create_pent_map()
         self.__map = map
         self.__perturb(map)
+        self.__recalc()
         self.__spawn_ocean()
         self.__spawn_land()
         self.__prnt('<<<DONE>>>')

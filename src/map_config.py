@@ -5,11 +5,12 @@ from enum import Enum
 class MapSize(Enum):
 
 
+    DEV   = (2, 2)
     MICRO = (16, 9)
-    TINY  = (32, 18)
-    SMALL = (50, 22)
+    TINY  = (20, 18)
+    SMALL = (32, 15)
     NORMAL = (100, 44)
-    LARGE = (256, 144)
+    LARGE = (200, 88)
     XLARGE = (512, 288)
 
 class MapConfig:
