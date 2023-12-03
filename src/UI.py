@@ -233,7 +233,7 @@ class CheckBox(Clickable):
         super().update()
         self.label.update()
 
-    def move(self, x: int, y: int):
+    def move(self, x: int, y: int, _=None):
         super().move(x, y, ALIGN.CENTER)
         self.label.move(x, y, ALIGN.CENTER)
 
@@ -274,7 +274,7 @@ class Button(Clickable):
         super().update()
         self.label.update()
 
-    def move(self, x: int, y: int):
+    def move(self, x: int, y: int, _=None):
         super().move(x, y, ALIGN.CENTER)
         self.label.move(x, y, ALIGN.CENTER)
 
@@ -334,17 +334,17 @@ class Container(Control):
         for c in self._children:
             ref = Rect(self._bounds.left+d_w*c.x, self._bounds.top+d_h*c.y, d_w, d_h)
             match c.align:
-                case ALIGN.TOP: c.content.move(ref.centerx, ref.top)
-                case ALIGN.TOP_LEFT:c.content.move(ref.left, ref.top)
-                case ALIGN.TOP_RIGHT:c.content.move(ref.right, ref.top)
+                case ALIGN.TOP: c.content.move(ref.centerx, ref.top, c.align)
+                case ALIGN.TOP_LEFT:c.content.move(ref.left, ref.top, c.align)
+                case ALIGN.TOP_RIGHT:c.content.move(ref.right, ref.top, c.align)
 
-                case ALIGN.BOTTOM: c.content.move(ref.centerx, ref.bottom)
-                case ALIGN.BOTTOM_LEFT: c.content.move(ref.left, ref.bottom)
-                case ALIGN.BOTTOM_RIGHT: c.content.move(ref.right, ref.bottom)
+                case ALIGN.BOTTOM: c.content.move(ref.centerx, ref.bottom, c.align)
+                case ALIGN.BOTTOM_LEFT: c.content.move(ref.left, ref.bottom, c.align)
+                case ALIGN.BOTTOM_RIGHT: c.content.move(ref.right, ref.bottom, c.align)
 
-                case ALIGN.CENTER: c.content.move(ref.centerx, ref.centery)
-                case ALIGN.LEFT: c.content.move(ref.left, ref.centery)
-                case ALIGN.RIGHT: c.content.move(ref.right, ref.centery)
+                case ALIGN.CENTER: c.content.move(ref.centerx, ref.centery, c.align)
+                case ALIGN.LEFT: c.content.move(ref.left, ref.centery, c.align)
+                case ALIGN.RIGHT: c.content.move(ref.right, ref.centery, c.align)
 
     def __init__(self, width=0, height=0, 
                  pos_x=0, pos_y=0, 

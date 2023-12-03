@@ -10,7 +10,7 @@ from display import Display, get_display
 from map import Land, Map, NGon, Vertex
 from map_config import MapConfig
 from map_state import MapState
-from menu import Menu
+from menu import Menu, PauseMenu, StatDisplay
 from settings import Settings
 
 GAME_STATE = Enum('',[
@@ -55,6 +55,8 @@ class Loop:
 
     __popup             : Menu
     __events            : list[Event]
+    __bottom_dsp        : StatDisplay
+    __pause_menu        : PauseMenu
 
     def __add_event(self, event_type:EVENT_TYPE,
             text:str=''):
@@ -84,7 +86,11 @@ class Loop:
         for e in pygame.event.get():
             if e.type == pygame.KEYDOWN:
                 match e.key:
-                    case pygame.K_ESCAPE: self.__pause = not self.__pause
+                    case pygame.K_ESCAPE: 
+                        self.__pause = True
+                        self.__pause_menu.show()
+                        self.__pause = False
+
                     case pygame.K_F5: self.__is_active = False
                     case pygame.K_TAB: self.__settings.draw_outline = not self.__settings.draw_outline
                     case _:
@@ -123,6 +129,7 @@ class Loop:
             pygame.draw.rect(self.__cvc, Color.WHITE.value, r, 2)
         if self.__state == GAME_STATE.NORMAL:
             self.__render_map_state()
+            self.__bottom_dsp.update()
 
     def __pop_event(self):
         if len(self.__events) == 0:
@@ -178,12 +185,30 @@ class Loop:
         return f'{int(yr)}{sfx} {abr}'
 
     def __init_ui(self):
+        dimx, dimy = self.__config.win_dim
+        ht = 20
         self.__time_ticker = Label(
             f'Year: {self.__frmt_year()}', 
             fg=Color.WHITE, bg=Color.GREY, 
             pos_y=20, pos_x=75, width=150, 
             border_width=0)
         self.__popup = None
+
+        self.__bottom_dsp = StatDisplay(self.__map_state, 
+                                        height=ht,  width=dimx,
+                                        pos_y=dimy-ht)
+        def __ok():
+            self.__pause = False
+        def __cancel():
+            self.__pause = False
+        def __quit():
+            self.__is_active = False
+            self.__pause = False
+
+        self.__pause_menu = PauseMenu(
+            ok_callback=__ok, 
+            cancel_callback=__cancel, 
+            quit_callback=__quit)
 
     def __init__(self, map:Map, cfg:MapConfig, stt:Settings) -> None:
         self.__display = get_display()
