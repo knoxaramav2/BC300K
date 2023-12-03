@@ -49,7 +49,7 @@ class Menu (Container):
 
     def __loop(self):
         while self._active:
-            self._display.clear()
+            #self._display.clear()
             self.__handle_events()
             self.update()
             self._display.render()

@@ -19,7 +19,7 @@ class MapConfig:
     name                : str = ''
     map_name            : str = ''#Can be empty if auto_gen true
 
-    map_size            : MapSize = MapSize.NORMAL
+    map_size            : MapSize = MapSize.TINY
 
     temp                : float = 0.30
 

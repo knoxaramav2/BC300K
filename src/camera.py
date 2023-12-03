@@ -9,7 +9,6 @@ from interface import Renderable
 from map_config import MapConfig
 from settings import Settings
 
-
 class Camera:
 
     __zoom              : float

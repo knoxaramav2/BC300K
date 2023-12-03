@@ -1,26 +1,84 @@
 
 
+from enum import Enum
 import pygame
+from UI import ALIGN, Button, Label
 from camera import Camera
 from colors import Color
+from config import Config, get_config
 from display import Display, get_display
-from map import Map, NGon, Vertex
+from map import Land, Map, NGon, Vertex
 from map_config import MapConfig
+from map_state import MapState
+from menu import Menu
 from settings import Settings
+
+GAME_STATE = Enum('',[
+    'NORMAL',
+    'MENU',
+    'START_SELECT'
+])
+
+EVENT_TYPE = Enum('',[
+    'INFO'
+])
+
+class Event:
+
+    event_type      : EVENT_TYPE
+    menu            : Menu
+
+    def __init__(self, type:EVENT_TYPE):
+        self.event_type = type
+        self.buttons = []
+        self.menu = None
 
 class Loop:
 
+    __time_ticker       : Label
+
     __is_active         : bool = False
     __pause             : bool = True
+    __state             : GAME_STATE
     __display           : Display
-    __config            : MapConfig
+    __map_config        : MapConfig
+    __config            : Config
+
     __settings          : Settings
     __map               : Map
+    __map_state         : MapState
     __camera            : Camera
     __cvc               : pygame.Surface
 
     __sel_vert          : Vertex = None
     __sel_cell          : NGon = None
+
+    __popup             : Menu
+    __events            : list[Event]
+
+    def __add_event(self, event_type:EVENT_TYPE,
+            text:str=''):
+        
+        e = Event(event_type)
+        def __ok():
+            print('MN: OK')
+            menu._active = False
+            self.__pause = False
+
+        width, height = self.__config.win_dim
+        menu = Menu(
+            width=width/2, 
+            height=height/2)
+        lbl = Label(text=text, border_width=0)
+        btn = Button(text='OK', width=50, callback=__ok)
+
+        menu.insert(lbl, 0, 1, ALIGN.CENTER)
+        menu.insert(btn, 0, 3, ALIGN.CENTER)
+
+        menu.pack()
+        e.menu = menu
+        
+        self.__events.append(e)
 
     def __handle_events(self):
         for e in pygame.event.get():
@@ -39,7 +97,12 @@ class Loop:
                 mx, my = pygame.mouse.get_pos()
                 self.__sel_vert = None
                 self.__sel_cell = self.__map.select_at(mx, my)
-                pass
+
+                if self.__state == GAME_STATE.START_SELECT:
+                    if self.__sel_cell != None and isinstance(self.__sel_cell.content, Land):
+                        self.__state = GAME_STATE.NORMAL
+                        self.__map_state.add_cell(self.__sel_cell)
+                        self.__add_event(EVENT_TYPE.INFO, f'Species started in {self.__sel_cell.content._climate.name} climate')
             elif e.type == pygame.MOUSEMOTION:
                 if self.__sel_vert == None: break
                 self.__sel_vert.pos = (e.pos[0], e.pos[1])
@@ -48,6 +111,9 @@ class Loop:
                 print(e.y)
                 self.__camera.inc_zoom(e.y)
 
+    def __render_map_state(self):
+        self.__time_ticker.update()
+
     def __render(self):
         self.__camera.draw(self.__map)
         if self.__sel_cell != None:
@@ -55,24 +121,80 @@ class Loop:
             b = self.__sel_cell.box
             r = pygame.Rect(b[0], b[1], b[2]-b[0], b[3]-b[1])
             pygame.draw.rect(self.__cvc, Color.WHITE.value, r, 2)
+        if self.__state == GAME_STATE.NORMAL:
+            self.__render_map_state()
+
+    def __pop_event(self):
+        if len(self.__events) == 0:
+            return
+        e:Event = self.__events[0]
+        self.__events = self.__events[1:]
         
+        self.__pause = True
+        e.menu.show()
+        
+    def __update(self):
+        if self.__map_state.update():
+            self.__time_ticker.set_text(self.__frmt_year())
+
+    def __update_menu(self):
+        if self.__popup != None:
+            self.__popup.update()
+
     def __loop(self):
         while self.__is_active:
-            self.__display.clear()
-            self.__handle_events()
+            #self.__display.clear()
+            if self.__pause:
+                self.__update_menu()
+            else:
+                self.__handle_events()
+                self.__update()
+                self.__pop_event()
             self.__render()
             self.__camera.update()
 
+    def __start(self):
+        self.__add_event(EVENT_TYPE.INFO,
+            text='Choose land to begin at')
+        self.__state = GAME_STATE.START_SELECT
+        self.__pause = False
+
     def run(self):
-        self.__display.clear()
+        #self.__display.clear()
         self.__is_active = True
+        self.__pause = False
+        self.__start()
         self.__loop()
+
+    def __frmt_year(self):
+        ret = ''
+        yr = self.__map_state.year
+        abr = 'B.C' if yr < 0 else 'A.D'
+        sfx = ''
+        if yr < 100000:
+            sfx = 'K'
+            yr /= 1000
+
+        return f'{int(yr)}{sfx} {abr}'
+
+    def __init_ui(self):
+        self.__time_ticker = Label(
+            f'Year: {self.__frmt_year()}', 
+            fg=Color.WHITE, bg=Color.GREY, 
+            pos_y=20, pos_x=75, width=150, 
+            border_width=0)
+        self.__popup = None
 
     def __init__(self, map:Map, cfg:MapConfig, stt:Settings) -> None:
         self.__display = get_display()
         self.__cvc = self.__display.get_canvas()
-        self.__config = cfg
+        self.__config = get_config()
+        self.__map_config = cfg
         self.__settings = stt
         self.__map = map
         self.__camera = Camera(stt, cfg)
+        self.__map_state = MapState()
+        self.__events = []
+        self.__state = GAME_STATE.NORMAL
+        self.__init_ui()
 

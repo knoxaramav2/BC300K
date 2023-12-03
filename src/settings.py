@@ -3,7 +3,9 @@
 
 class Settings:
 
-    draw_outline           : bool = True
+    draw_outline        : bool = True
+    update_delay        : int = 50   
+    start_year          : int = -300000
 
     def __init__(self):
         pass

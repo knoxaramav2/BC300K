@@ -177,7 +177,7 @@ class Label(Control):
         super().update()
         self._display.get_canvas().blit(self.__text, self._bounds.topleft)
 
-    def move(self, x: int, y: int, align:ALIGN=ALIGN.TOP_LEFT):
+    def move(self, x: int, y: int, align:ALIGN=ALIGN.CENTER):
         super().move(x, y, align)
 
     def __init__(self, 
@@ -205,6 +205,9 @@ class Label(Control):
 class Clickable(Control):
 
     __callback      : Callable
+
+    def set_callback(self, callback:Callable):
+        self.__callback = callback
 
     def on_click(self):
         if self.__callback != None:
