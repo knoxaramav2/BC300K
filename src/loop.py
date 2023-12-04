@@ -107,7 +107,7 @@ class Loop:
                 if self.__state == GAME_STATE.START_SELECT:
                     if self.__sel_cell != None and isinstance(self.__sel_cell.content, Land):
                         self.__state = GAME_STATE.NORMAL
-                        self.__map_state.add_cell(self.__sel_cell)
+                        self.__map_state.init_cell(self.__sel_cell)
                         self.__add_event(EVENT_TYPE.INFO, f'Species started in {self.__sel_cell.content._climate.name} climate')
             elif e.type == pygame.MOUSEMOTION:
                 if self.__sel_vert == None: break
@@ -129,7 +129,7 @@ class Loop:
             pygame.draw.rect(self.__cvc, Color.WHITE.value, r, 2)
         if self.__state == GAME_STATE.NORMAL:
             self.__render_map_state()
-            self.__bottom_dsp.update()
+            self.__bottom_dsp.update(self.__sel_cell)
 
     def __pop_event(self):
         if len(self.__events) == 0:

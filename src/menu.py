@@ -7,6 +7,7 @@ from UI import Color, Control
 from colors import Color
 from config import get_config
 from display import Display
+from map import Cell, NGon
 from map_config import MapConfig
 from map_state import MapState
 from settings import Settings
@@ -193,20 +194,30 @@ class StatDisplay(Container):
 
     __stat          : MapState
 
-    def update(self):
+    def update(self, shape:NGon):
         super().update()
-        
-        self.population.set_text(f'POP: {self.__stat.population}')
+        cell = None if shape == None else shape.content
+        lcl = self.__stat._curr_cell
+        lpop = '---' if lcl == None or cell == None else lcl._population
+        lclm = '---' if cell == None else cell._climate.name
+
+        self.population.set_text(f'TOTAL POP: {int(self.__stat.population)}')
         self.avg_temp.set_text(f'TMP: {self.__stat.avg_tmp:.3}')
+        self.lcl_pop.set_text(f'POP: {lpop}')
+        self.lcl_clm.set_text(f'CLIMATE: {lclm}')
 
     def __init__(self, stat:MapState, width=0, height=0, pos_x=0, pos_y=0, border_width: int = 3, padx: int = 0, pady: int = 0, fg=Color.WHITE, bg=Color.BLACK, border: Color = Color.LIGHT_GRAY, parent: Control = None):
         super().__init__(width, height, pos_x, pos_y, border_width, padx, pady, fg, bg, border, parent)
         self.__stat = stat
-        self.population = Label(text='POP: ', pos_x=100)
+        self.population = Label(text='TOTAL POP: ', pos_x=100)
         self.avg_temp = Label(text='TMP: ')
+        self.lcl_pop = Label(text='POP: ')
+        self.lcl_clm = Label(text='CLIMATE: ')
 
         self.insert(self.population, 0, 0, ALIGN.LEFT)
         self.insert(self.avg_temp, 1, 0, ALIGN.LEFT)
+        self.insert(self.lcl_pop, 2, 0, ALIGN.LEFT)
+        self.insert(self.lcl_clm, 3, 0, ALIGN.LEFT)
 
         self.pack()
 

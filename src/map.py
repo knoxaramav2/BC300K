@@ -28,7 +28,7 @@ class NGon(Renderable):
     vertices        : list[Vertex]
     center          : tuple[float, float]
     neighbors       : list[NGon]
-    content         : Cella
+    content         : Cell
     DEF_FUZZ        : int = 3.0
 
     __dsp           : Display
